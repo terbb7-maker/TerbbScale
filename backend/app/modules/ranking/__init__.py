@@ -1,0 +1,1 @@
+"""Monthly platform ranking module."""

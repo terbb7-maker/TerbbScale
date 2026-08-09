@@ -1,0 +1,94 @@
+name: postx
+
+x-backend: &backend
+  build:
+    context: ./backend
+  env_file:
+    - .env
+  dns:
+    - 1.1.1.1
+    - 8.8.8.8
+  restart: unless-stopped
+  networks:
+    - postx
+  depends_on:
+    redis:
+      condition: service_healthy
+
+services:
+  api:
+    <<: *backend
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips=*"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    <<: *backend
+    command: ["celery", "-A", "app.workers.celery_app:celery_app", "worker", "--loglevel=INFO", "--concurrency=4", "--queues=publishing,media,maintenance"]
+    stop_grace_period: 45s
+
+  scheduler:
+    <<: *backend
+    command: ["python", "-m", "app.scheduler.main"]
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - postx
+    depends_on:
+      api:
+        condition: service_healthy
+
+  redis:
+    image: redis:8.2.1-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "384mb", "--maxmemory-policy", "allkeys-lru"]
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - postx
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - postx
+    depends_on:
+      - web
+      - api
+
+volumes:
+  redis-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  postx:
+    driver: bridge

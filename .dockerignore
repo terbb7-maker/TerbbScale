@@ -1,0 +1,15 @@
+.git
+.agents
+docs
+node_modules
+**/node_modules
+.next
+**/.next
+.venv
+**/.venv
+__pycache__
+**/__pycache__
+.env
+.env.*
+*.log
+
