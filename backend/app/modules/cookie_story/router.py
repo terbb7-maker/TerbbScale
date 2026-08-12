@@ -129,6 +129,16 @@ async def _serialize(
         preview_url=preview_url,
         link_url=preset.link_url,
         link_title=preset.link_title,
+        sticker_x=preset.sticker_x,
+        sticker_y=preset.sticker_y,
+        sticker_width=preset.sticker_width,
+        sticker_height=preset.sticker_height,
+        sticker_rotation=preset.sticker_rotation,
+        sticker_font_size=preset.sticker_font_size,
+        sticker_font_family=preset.sticker_font_family,
+        sticker_italic=preset.sticker_italic,
+        sticker_text_color=preset.sticker_text_color,
+        sticker_background_color=preset.sticker_background_color,
         updated_at=preset.updated_at,
     )
 
@@ -173,6 +183,16 @@ async def save_preset(
     preset.media_id = media.id
     preset.link_url = str(payload.link_url)
     preset.link_title = payload.link_title
+    preset.sticker_x = payload.sticker_x
+    preset.sticker_y = payload.sticker_y
+    preset.sticker_width = payload.sticker_width
+    preset.sticker_height = payload.sticker_height
+    preset.sticker_rotation = payload.sticker_rotation
+    preset.sticker_font_size = payload.sticker_font_size
+    preset.sticker_font_family = payload.sticker_font_family
+    preset.sticker_italic = payload.sticker_italic
+    preset.sticker_text_color = payload.sticker_text_color
+    preset.sticker_background_color = payload.sticker_background_color
     await session.flush()
     await record_audit(
         session,
@@ -185,6 +205,7 @@ async def save_preset(
         after={
             "media_id": str(media.id),
             "link_host": payload.link_url.host,
+            "sticker_style_changed": True,
         },
     )
     await session.commit()
@@ -249,5 +270,15 @@ async def create_delivery(
         duration_ms=media.duration_ms,
         link_url=preset.link_url,
         link_title=preset.link_title,
+        sticker_x=preset.sticker_x,
+        sticker_y=preset.sticker_y,
+        sticker_width=preset.sticker_width,
+        sticker_height=preset.sticker_height,
+        sticker_rotation=preset.sticker_rotation,
+        sticker_font_size=preset.sticker_font_size,
+        sticker_font_family=preset.sticker_font_family,
+        sticker_italic=preset.sticker_italic,
+        sticker_text_color=preset.sticker_text_color,
+        sticker_background_color=preset.sticker_background_color,
         expires_at=expires_at,
     )

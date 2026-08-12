@@ -25,7 +25,7 @@ Comece por:
 - Redis, Celery, scheduler independente, retentativas e renovação de tokens;
 - Instagram Login por aplicativo próprio de cada usuário;
 - publicação oficial de Feed, Reel e Story;
-- preset de Story com link e publicação local opcional no conector por cookie;
+- preset de Story com link, editor visual completo do adesivo e publicação local opcional no conector por cookie;
 - coleta periódica de Insights e atualização do dashboard via WebSocket;
 - Caddy com HTTPS automático e headers de segurança.
 

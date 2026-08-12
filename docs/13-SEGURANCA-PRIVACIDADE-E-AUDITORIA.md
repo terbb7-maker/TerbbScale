@@ -114,7 +114,7 @@ Loggers de transporte HTTP (`httpx`/`httpcore`) permanecem em `WARNING` também 
 
 Exports de cookies nunca atravessam `fetch`, API, Supabase, Redis ou WebSocket. A extensão aceita apenas o domínio `instagram.com`, guarda a fila em `chrome.storage.session` restrito a contextos confiáveis, mascara o identificador exibido e remove os dados temporários quando solicitado ou quando a sessão do navegador termina. Arquivos reais não podem ser incluídos em fixtures, screenshots ou pacotes de distribuição.
 
-No Story local, o backend entrega apenas o original por URL assinada de cinco minutos e nunca recebe `sessionid`, `csrftoken`, `ds_user_id` ou headers web. A extensão fixa as origens permitidas ao Instagram e ao host do projeto Supabase, confirma o `ds_user_id`, limita mídia, sanitiza erros e não persiste resposta bruta. O preset guarda somente `media_id`, link e título; a auditoria registra apenas IDs e hostname do destino. O recurso possui kill switch de ambiente.
+No Story local, o backend entrega apenas o original por URL assinada de cinco minutos e nunca recebe `sessionid`, `csrftoken`, `ds_user_id` ou headers web. A extensão fixa as origens permitidas ao Instagram e ao host do projeto Supabase, confirma o `ds_user_id`, limita mídia, sanitiza erros e não persiste resposta bruta. O preset guarda somente `media_id`, link, título e parâmetros visuais validados; fontes e cores usam allowlists, coordenadas/tamanhos permanecem dentro do quadro e a auditoria registra apenas IDs, hostname e indicação de mudança visual. O recurso possui kill switch de ambiente.
 
 ## 10. Auditoria
 

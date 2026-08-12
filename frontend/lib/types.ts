@@ -185,7 +185,34 @@ export type Media = {
   created_at: string;
 };
 
-export type CookieStoryPreset = {
+export type CookieStoryFontFamily =
+  | "Inter"
+  | "Roboto"
+  | "Poppins"
+  | "Montserrat"
+  | "Bebas Neue"
+  | "Playfair Display"
+  | "Merriweather"
+  | "Pacifico"
+  | "DancingScript"
+  | "Anton"
+  | "Lora"
+  | "Great Vibes";
+
+export type CookieStoryStickerStyle = {
+  sticker_x: number;
+  sticker_y: number;
+  sticker_width: number;
+  sticker_height: number;
+  sticker_rotation: number;
+  sticker_font_size: number;
+  sticker_font_family: CookieStoryFontFamily;
+  sticker_italic: boolean;
+  sticker_text_color: string;
+  sticker_background_color: string;
+};
+
+export type CookieStoryPreset = CookieStoryStickerStyle & {
   id: string;
   media_id: string;
   media_name: string;
@@ -201,7 +228,7 @@ export type CookieStoryPreset = {
   updated_at: string;
 };
 
-export type CookieStoryDelivery = {
+export type CookieStoryDelivery = CookieStoryStickerStyle & {
   preset_id: string;
   preset_version: string;
   media_id: string;

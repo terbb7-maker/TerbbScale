@@ -97,12 +97,12 @@ O worker deve tratar criação e publicação como operações distintas e persi
 
 ### 6.1 Story local com link durante a conexão
 
-1. o tenant escolhe uma mídia `ready` da biblioteca e salva link HTTPS/título;
+1. o tenant escolhe uma mídia `ready`, salva link HTTPS/título e edita posição, dimensões, rotação, fonte, itálico e cores do adesivo;
 2. o backend persiste apenas o preset e valida tipo, tamanho, dimensões e duração;
 3. após ativar a sessão, o Chrome captura localmente os headers web necessários;
 4. ao clicar em “Postar Story”, a UI solicita uma URL assinada do original com TTL de cinco minutos;
-5. a extensão confere o `ds_user_id`, baixa a mídia diretamente do Storage, enquadra imagem em 1080×1920 quando necessário e envia imagem/MP4 ao Instagram;
-6. a extensão configura o Story e o adesivo de link por endpoint privado, mantendo cookies, CSRF e headers no navegador;
+5. a extensão confere o `ds_user_id`, baixa a mídia diretamente do Storage, enquadra imagem em 1080×1920 e renderiza localmente a edição; em vídeo, compõe um overlay com FFmpeg/WASM dentro do Chrome;
+6. a extensão envia a mídia editada e configura a área clicável do adesivo pelo endpoint privado, mantendo cookies, CSRF, headers e bytes processados no navegador;
 7. a fila recebe somente estado local sanitizado e então o operador segue para convite e OAuth.
 
 Não há execução automática ao ativar sessão, retentativa cega, agendamento, processamento no backend ou persistência remota da resposta privada. O botão pode ser desativado por configuração de ambiente. Mudanças do Instagram podem quebrar esse fluxo sem aviso.

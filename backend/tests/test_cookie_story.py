@@ -47,6 +47,44 @@ def test_cookie_story_preset_normalizes_link_title() -> None:
     assert payload.link_title == "Saiba mais"
 
 
+def test_cookie_story_preset_accepts_complete_sticker_style() -> None:
+    payload = CookieStoryPresetInput(
+        media_id=uuid.uuid4(),
+        link_url="https://example.com/path",
+        sticker_x=0.35,
+        sticker_y=0.42,
+        sticker_width=0.4,
+        sticker_height=0.08,
+        sticker_rotation=-25,
+        sticker_font_size=24,
+        sticker_font_family="Great Vibes",
+        sticker_italic=True,
+        sticker_text_color="rgba(255, 192, 10, 1)",
+        sticker_background_color="rgba(115, 0, 255, 1)",
+    )
+    assert payload.sticker_font_family == "Great Vibes"
+    assert payload.sticker_rotation == -25
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"sticker_x": 0.1, "sticker_width": 0.58},
+        {"sticker_y": 0.98, "sticker_height": 0.1},
+        {"sticker_font_family": "Comic Sans"},
+        {"sticker_text_color": "url(javascript:alert(1))"},
+        {"sticker_background_color": "transparent"},
+    ],
+)
+def test_cookie_story_preset_rejects_invalid_sticker_style(changes: dict[str, object]) -> None:
+    with pytest.raises(ValidationError):
+        CookieStoryPresetInput(
+            media_id=uuid.uuid4(),
+            link_url="https://example.com/path",
+            **changes,
+        )
+
+
 def test_cookie_story_accepts_ready_image() -> None:
     _validate_story_media(media())
 

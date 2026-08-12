@@ -154,6 +154,9 @@ Restrição única proposta: `(owner_id, instagram_user_id)` para contas não re
 - `media_id` referenciando mídia do mesmo tenant validada pela API;
 - `link_url` HTTPS;
 - `link_title` opcional, até 80 caracteres;
+- geometria normalizada do adesivo: centro `x/y`, largura, altura e rotação;
+- tipografia: tamanho, família allowlisted e itálico;
+- cores de texto e fundo limitadas à paleta allowlisted;
 - timestamps.
 
 O preset contém somente configuração de produto. Cookies, `csrftoken`, headers de requisição, URL assinada e resultado bruto do Instagram nunca entram nessa tabela. RLS limita linhas ao proprietário; o Data API não recebe privilégios diretos para a tabela e o backend gera URLs do original com TTL de cinco minutos.

@@ -88,6 +88,8 @@ Este plano não autoriza execução. Ele define uma sequência possível após a
 - preset por tenant com mídia da biblioteca e link HTTPS;
 - entrega temporária do original;
 - publicador mínimo de imagem/MP4 na extensão;
+- editor do adesivo com geometria, tipografia e cores equivalentes à referência;
+- composição local da edição em imagem e vídeo;
 - passo “Postar Story” antes do convite;
 - estado sanitizado por conta na fila local.
 
@@ -95,6 +97,8 @@ Este plano não autoriza execução. Ele define uma sequência possível após a
 
 - conta ativa confere com o `ds_user_id` da fila;
 - imagem é enquadrada em 1080×1920 e MP4 exige 9:16, até 60 s e 100 MB;
+- prévia permite arrastar, redimensionar, girar e escolher tamanho/fonte/itálico/cores, mantendo o adesivo dentro do Story;
+- mídia enviada contém a aparência renderizada e a região clicável usa a mesma geometria normalizada;
 - URL do original expira em cinco minutos;
 - cookies e headers do Instagram não chegam ao backend/Supabase/logs;
 - checkpoint ou mudança do endpoint gera falha clara e não é contornado;

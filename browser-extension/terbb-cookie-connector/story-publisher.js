@@ -1,8 +1,38 @@
+import { compositeVideoOverlay } from "./ffmpeg-runner.js";
+import { requireInstagramContext } from "./instagram-session.js";
+
 const INSTAGRAM_APP_ID = "936619743392459";
 const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
-
-import { requireInstagramContext } from "./instagram-session.js";
+const STORY_FONTS = {
+  Inter: ["Inter-VariableFont_opsz,wght.woff2", "Inter-Italic-VariableFont_opsz,wght.woff2"],
+  Roboto: ["Roboto-VariableFont_wdth,wght.woff2", "Roboto-Italic-VariableFont_wdth,wght.woff2"],
+  Poppins: ["Poppins-Regular.woff2", "Poppins-Italic.woff2"],
+  Montserrat: ["Montserrat-VariableFont_wght.woff2", "Montserrat-Italic-VariableFont_wght.woff2"],
+  "Bebas Neue": ["BebasNeue-Regular.woff2"],
+  "Playfair Display": ["PlayfairDisplay-VariableFont_wght.woff2", "PlayfairDisplay-Italic-VariableFont_wght.woff2"],
+  Merriweather: ["Merriweather-VariableFont_opsz,wdth,wght.ttf", "Merriweather-Italic-VariableFont_opsz,wdth,wght.woff2"],
+  Pacifico: ["Pacifico-Regular.woff2"],
+  DancingScript: ["DancingScript-VariableFont_wght.woff2"],
+  Anton: ["Anton-Regular.woff2"],
+  Lora: ["Lora-VariableFont_wght.woff2", "Lora-Italic-VariableFont_wght.woff2"],
+  "Great Vibes": ["GreatVibes-Regular.woff2"],
+};
+const STORY_COLORS = new Set([
+  "#ffffff",
+  "rgba(0, 0, 0, 0.6)",
+  "rgba(0, 0, 0, 1)",
+  "rgba(65, 174, 69, 1)",
+  "rgba(0, 212, 255, 1)",
+  "rgba(53, 141, 255, 1)",
+  "rgba(115, 0, 255, 1)",
+  "rgba(255, 255, 255, 1)",
+  "rgba(255, 192, 10, 1)",
+  "rgba(255, 129, 0, 1)",
+  "rgba(255, 49, 49, 1)",
+  "rgba(255, 101, 195, 1)",
+]);
+const loadedFonts = new Map();
 
 export async function publishStoryFromDelivery(delivery, expectedAccountId) {
   validateDelivery(delivery);
@@ -18,15 +48,11 @@ export async function publishStoryFromDelivery(delivery, expectedAccountId) {
     throw new Error("O tamanho da mídia recebida não corresponde ao arquivo configurado.");
   }
 
+  await ensureStoryFont(delivery.sticker_font_family, delivery.sticker_italic);
   const source = new Blob([bytes], { type: delivery.mime_type });
   const prepared = delivery.media_kind === "image"
-    ? await normalizeStoryImage(source)
-    : {
-        blob: source,
-        width: delivery.width,
-        height: delivery.height,
-        mimeType: delivery.mime_type,
-      };
+    ? await normalizeStoryImage(source, delivery)
+    : await renderStoryVideo(source, delivery);
   const uploadId = String(Date.now());
   const entityName = `story_${uploadId}`;
 
@@ -72,14 +98,37 @@ function validateDelivery(delivery) {
   } else if (!String(delivery.mime_type).startsWith("image/")) {
     throw new Error("O arquivo configurado não é uma imagem válida.");
   }
+  validateStickerStyle(delivery);
 }
 
-async function normalizeStoryImage(blob) {
+function validateStickerStyle(delivery) {
+  const values = [
+    delivery.sticker_x,
+    delivery.sticker_y,
+    delivery.sticker_width,
+    delivery.sticker_height,
+    delivery.sticker_rotation,
+    delivery.sticker_font_size,
+  ].map(Number);
+  if (values.some((value) => !Number.isFinite(value))) throw new Error("A edição do adesivo é inválida.");
+  const [x, y, width, height, rotation, fontSize] = values;
+  if (width < 0.08 || width > 0.9 || height < 0.04 || height > 0.3) throw new Error("O tamanho do adesivo é inválido.");
+  if (x < width / 2 || x > 1 - width / 2 || y < height / 2 || y > 1 - height / 2) throw new Error("O adesivo precisa ficar dentro do Story.");
+  if (rotation < -180 || rotation > 180 || fontSize < 14 || fontSize > 32) throw new Error("A rotação ou o texto do adesivo é inválido.");
+  if (!Object.hasOwn(STORY_FONTS, delivery.sticker_font_family)) throw new Error("A fonte escolhida não é permitida.");
+  if (!STORY_COLORS.has(delivery.sticker_text_color) || !STORY_COLORS.has(delivery.sticker_background_color)) {
+    throw new Error("As cores escolhidas não pertencem à paleta permitida.");
+  }
+}
+
+async function normalizeStoryImage(blob, delivery) {
   const bitmap = await createImageBitmap(blob);
   try {
     const width = 1080;
     const height = 1920;
-    const canvas = new OffscreenCanvas(width, height);
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
     const context = canvas.getContext("2d", { alpha: false });
     context.fillStyle = "#000000";
     context.fillRect(0, 0, width, height);
@@ -93,8 +142,9 @@ async function normalizeStoryImage(blob) {
       drawWidth,
       drawHeight,
     );
+    drawLinkSticker(context, width, height, delivery);
     return {
-      blob: await canvas.convertToBlob({ type: "image/jpeg", quality: 0.94 }),
+      blob: await canvasToBlob(canvas, "image/jpeg", 0.94),
       width,
       height,
       mimeType: "image/jpeg",
@@ -102,6 +152,119 @@ async function normalizeStoryImage(blob) {
   } finally {
     bitmap.close();
   }
+}
+
+async function renderStoryVideo(source, delivery) {
+  const width = even(Number(delivery.width));
+  const height = even(Number(delivery.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  context.clearRect(0, 0, width, height);
+  drawLinkSticker(context, width, height, delivery);
+  const overlay = await canvasToBlob(canvas, "image/png");
+  const blob = await compositeVideoOverlay(source, overlay);
+  if (blob.size > MAX_VIDEO_BYTES) {
+    throw new Error("O vídeo renderizado ultrapassou 100 MB. Reduza a duração ou a resolução.");
+  }
+  return { blob, width, height, mimeType: "video/mp4" };
+}
+
+function drawLinkSticker(context, storyWidth, storyHeight, style) {
+  const centerX = Number(style.sticker_x) * storyWidth;
+  const centerY = Number(style.sticker_y) * storyHeight;
+  const width = Number(style.sticker_width) * storyWidth;
+  const height = Number(style.sticker_height) * storyHeight;
+  const rotation = Number(style.sticker_rotation) * Math.PI / 180;
+  const logicalScale = storyWidth / 360;
+  const fontSize = Number(style.sticker_font_size) * logicalScale;
+  const family = String(style.sticker_font_family);
+  const title = String(style.link_title || safeHost(style.link_url));
+  const radius = Math.min(height / 3, 22 * logicalScale);
+  const padding = Math.max(8, 10 * logicalScale);
+  const iconSize = Math.max(10, fontSize * 0.9);
+  const gap = 5 * logicalScale;
+
+  context.save();
+  context.translate(centerX, centerY);
+  context.rotate(rotation);
+  roundedRect(context, -width / 2, -height / 2, width, height, radius);
+  context.fillStyle = style.sticker_background_color;
+  context.fill();
+  context.strokeStyle = "rgba(255, 255, 255, 0.16)";
+  context.lineWidth = Math.max(1, height * 0.04);
+  context.stroke();
+  context.font = `${style.sticker_italic ? "italic " : ""}600 ${fontSize}px "${family}", sans-serif`;
+  context.textBaseline = "middle";
+  context.textAlign = "left";
+  context.fillStyle = style.sticker_text_color;
+  const maxTextWidth = Math.max(1, width - padding * 2 - iconSize - gap);
+  const fitted = ellipsize(context, title, maxTextWidth);
+  const totalWidth = iconSize + gap + context.measureText(fitted).width;
+  const startX = -totalWidth / 2;
+  drawLinkIcon(context, startX + iconSize / 2, 0, iconSize, style.sticker_text_color);
+  context.fillText(fitted, startX + iconSize + gap, fontSize * 0.035, maxTextWidth);
+  context.restore();
+}
+
+function drawLinkIcon(context, x, y, size, color) {
+  context.save();
+  context.translate(x, y);
+  context.rotate(-Math.PI / 4);
+  context.strokeStyle = color;
+  context.lineWidth = Math.max(1.5, size * 0.11);
+  context.lineCap = "round";
+  const radius = size * 0.22;
+  context.beginPath();
+  context.roundRect(-size * 0.42, -radius, size * 0.52, radius * 2, radius);
+  context.stroke();
+  context.beginPath();
+  context.roundRect(-size * 0.1, -radius, size * 0.52, radius * 2, radius);
+  context.stroke();
+  context.restore();
+}
+
+function roundedRect(context, x, y, width, height, radius) {
+  context.beginPath();
+  context.roundRect(x, y, width, height, radius);
+  context.closePath();
+}
+
+function ellipsize(context, text, maxWidth) {
+  if (context.measureText(text).width <= maxWidth) return text;
+  let value = text;
+  while (value.length > 1 && context.measureText(`${value}…`).width > maxWidth) value = value.slice(0, -1);
+  return `${value}…`;
+}
+
+async function ensureStoryFont(family, italic) {
+  if (!document?.fonts || !globalThis.FontFace) return;
+  const files = STORY_FONTS[family];
+  const style = italic && files[1] ? "italic" : "normal";
+  const file = style === "italic" ? files[1] : files[0];
+  const key = `${family}:${style}`;
+  if (!loadedFonts.has(key)) {
+    loadedFonts.set(key, (async () => {
+      const face = new FontFace(family, `url(${chrome.runtime.getURL(`fonts/${file}`)})`, { style });
+      document.fonts.add(await face.load());
+      await document.fonts.ready;
+    })());
+  }
+  await loadedFonts.get(key);
+}
+
+function canvasToBlob(canvas, type, quality) {
+  return new Promise((resolve, reject) => canvas.toBlob(
+    (blob) => blob ? resolve(blob) : reject(new Error("A renderização do adesivo falhou.")),
+    type,
+    quality,
+  ));
+}
+
+function even(value) {
+  const rounded = Math.max(2, Math.round(value));
+  return rounded % 2 === 0 ? rounded : rounded - 1;
 }
 
 async function uploadStoryPhoto(entityName, uploadId, prepared, headers) {
@@ -143,20 +306,18 @@ async function uploadStoryEntity(entityName, blob, params, mimeType, headers, vi
       "X-Instagram-Rupload-Params": JSON.stringify(params),
     },
   });
-  if (!response.ok) {
-    throw new Error(`O Instagram recusou o upload do Story (${response.status}).`);
-  }
+  if (!response.ok) throw new Error(`O Instagram recusou o upload do Story (${response.status}).`);
 }
 
 async function configureStory(uploadId, delivery, cookies, headers) {
   const sticker = {
-    x: 0.5,
-    y: 0.81,
-    width: 0.58,
-    height: 0.1,
-    rotation: 0,
-    display_url: new URL(delivery.link_url).hostname.replace(/^www\./, ""),
-    link_title: delivery.link_title || new URL(delivery.link_url).hostname.replace(/^www\./, ""),
+    x: delivery.sticker_x,
+    y: delivery.sticker_y,
+    width: delivery.sticker_width,
+    height: delivery.sticker_height,
+    rotation: delivery.sticker_rotation,
+    display_url: safeHost(delivery.link_url),
+    link_title: delivery.link_title || safeHost(delivery.link_url),
     link_type: "web",
     link_type_v2: "external",
     url: delivery.link_url,
@@ -192,6 +353,14 @@ async function configureStory(uploadId, delivery, cookies, headers) {
   }
   const parsed = parseInstagramJson(lastError);
   throw new Error(parsed.message || "O Instagram não concluiu a publicação do Story.");
+}
+
+function safeHost(value) {
+  try {
+    return new URL(value).hostname.replace(/^www\./, "");
+  } catch {
+    return "Link";
+  }
 }
 
 function parseInstagramJson(value) {

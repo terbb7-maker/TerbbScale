@@ -3,8 +3,10 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -68,6 +70,18 @@ class CookieStoryPreset(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     link_url: Mapped[str] = mapped_column(Text, nullable=False)
     link_title: Mapped[str | None] = mapped_column(String(80))
+    sticker_x: Mapped[float] = mapped_column(Float, default=0.5, nullable=False)
+    sticker_y: Mapped[float] = mapped_column(Float, default=0.81, nullable=False)
+    sticker_width: Mapped[float] = mapped_column(Float, default=0.58, nullable=False)
+    sticker_height: Mapped[float] = mapped_column(Float, default=0.1, nullable=False)
+    sticker_rotation: Mapped[float] = mapped_column(Float, default=0, nullable=False)
+    sticker_font_size: Mapped[int] = mapped_column(Integer, default=14, nullable=False)
+    sticker_font_family: Mapped[str] = mapped_column(String(32), default="Inter", nullable=False)
+    sticker_italic: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    sticker_text_color: Mapped[str] = mapped_column(String(32), default="#ffffff", nullable=False)
+    sticker_background_color: Mapped[str] = mapped_column(
+        String(32), default="rgba(0, 0, 0, 0.6)", nullable=False
+    )
 
     __table_args__ = (
         UniqueConstraint("owner_id", name="uq_cookie_story_presets_owner_id"),
@@ -79,6 +93,23 @@ class CookieStoryPreset(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         CheckConstraint(
             "link_title is null or char_length(link_title) between 1 and 80",
             name="link_title_length",
+        ),
+        CheckConstraint(
+            "sticker_width between 0.08 and 0.9 and sticker_height between 0.04 and 0.3",
+            name="sticker_size",
+        ),
+        CheckConstraint(
+            "sticker_x between sticker_width / 2 and 1 - sticker_width / 2 "
+            "and sticker_y between sticker_height / 2 and 1 - sticker_height / 2",
+            name="sticker_position",
+        ),
+        CheckConstraint(
+            "sticker_rotation between -180 and 180",
+            name="sticker_rotation",
+        ),
+        CheckConstraint(
+            "sticker_font_size between 14 and 32",
+            name="sticker_font_size",
         ),
     )
 

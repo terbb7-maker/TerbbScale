@@ -1,7 +1,6 @@
 import {
   clearInstagramHeaders,
 } from "./instagram-session.js";
-import { publishStoryFromDelivery } from "./story-publisher.js";
 
 const STORAGE_KEY = "terbb_cookie_queue_v1";
 const INSTAGRAM_ORIGIN = "https://www.instagram.com";
@@ -14,6 +13,7 @@ chrome.runtime.onInstalled.addListener(async () => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.target === "offscreen") return false;
   handleMessage(message)
     .then((data) => sendResponse({ ok: true, data }))
     .catch((error) => sendResponse({ ok: false, error: safeError(error) }));
@@ -157,7 +157,14 @@ async function publishCurrentStory(payload) {
   item.story = { status: "publishing", publishedLink: null, error: null, publishedAt: null };
   await chrome.storage.session.set({ [STORAGE_KEY]: queue });
   try {
-    const result = await publishStoryFromDelivery(payload.delivery, item.accountId);
+    await ensureOffscreenDocument();
+    const rendered = await chrome.runtime.sendMessage({
+      target: "offscreen",
+      type: "OFFSCREEN_PUBLISH_STORY",
+      payload: { delivery: payload.delivery, expectedAccountId: item.accountId },
+    });
+    if (!rendered?.ok) throw new Error(rendered?.error || "A renderização local do Story falhou.");
+    const result = rendered.data;
     item.story = {
       status: "published",
       publishedLink: result.publishedLink || null,
@@ -180,6 +187,16 @@ async function publishCurrentStory(payload) {
     await chrome.storage.session.set({ [STORAGE_KEY]: queue });
     throw error;
   }
+}
+
+async function ensureOffscreenDocument() {
+  if (!chrome.offscreen) throw new Error("Atualize o Chrome para editar Stories em vídeo.");
+  if (await chrome.offscreen.hasDocument()) return;
+  await chrome.offscreen.createDocument({
+    url: "offscreen.html",
+    reasons: ["WORKERS"],
+    justification: "Renderizar localmente o adesivo de link em imagens e vídeos do Story.",
+  });
 }
 
 async function replaceInstagramCookies(cookies) {

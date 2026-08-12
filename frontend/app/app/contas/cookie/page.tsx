@@ -144,7 +144,7 @@ export default function CookieConnectPage() {
       const result = await connectorCommand<ConnectorStoryResult>(
         "PUBLISH_STORY",
         { delivery },
-        180_000,
+        600_000,
       );
       setStatus(result.status);
       toast.success("Story publicado na conta atual.", { id: toastId });

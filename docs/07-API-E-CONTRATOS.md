@@ -82,11 +82,11 @@ Mensagens públicas não contêm stack trace, segredo, token, SQL ou resposta se
 | Método | Rota | Resultado |
 |---|---|---|
 | GET | `/cookie-story/preset` | Lê o preset do tenant com preview temporário |
-| PUT | `/cookie-story/preset` | Cria ou substitui mídia/link do preset |
+| PUT | `/cookie-story/preset` | Cria ou substitui mídia, link e edição visual do adesivo |
 | DELETE | `/cookie-story/preset` | Remove o preset |
 | POST | `/cookie-story/delivery` | Valida novamente e assina o original por cinco minutos para a extensão |
 
-`/delivery` nunca recebe cookie ou identificador do Instagram e nunca executa a publicação. A resposta sensível não pode ser registrada e expira rapidamente.
+Preset e delivery usam coordenadas normalizadas, rotação entre -180° e 180°, fonte allowlisted, tamanho entre 14 e 32 e cores da paleta fechada. `/delivery` nunca recebe cookie ou identificador do Instagram e nunca executa a publicação. A resposta sensível não pode ser registrada e expira rapidamente.
 
 ### `/media`
 
