@@ -1,6 +1,6 @@
 # Terbb Scale
 
-Terbb Scale é um SaaS multi-tenant para gerenciamento, agendamento e publicação automatizada no Instagram por meio exclusivo da **Instagram Platform API com Instagram Login**, sem Facebook Login. O nome técnico histórico do repositório e de alguns serviços internos permanece `PostX` para evitar mudanças operacionais desnecessárias.
+Terbb Scale é um SaaS multi-tenant para gerenciamento, agendamento e publicação automatizada no Instagram. Conexão, tokens, campanhas e insights usam a **Instagram Platform API com Instagram Login**, sem Facebook Login. Há uma extensão local opcional para preparar sessões por cookie e publicar, por clique, um Story predefinido com link durante a integração de contas. O nome técnico histórico do repositório e de alguns serviços internos permanece `PostX` para evitar mudanças operacionais desnecessárias.
 
 ## Situação do projeto
 
@@ -25,6 +25,7 @@ Comece por:
 - Redis, Celery, scheduler independente, retentativas e renovação de tokens;
 - Instagram Login por aplicativo próprio de cada usuário;
 - publicação oficial de Feed, Reel e Story;
+- preset de Story com link e publicação local opcional no conector por cookie;
 - coleta periódica de Insights e atualização do dashboard via WebSocket;
 - Caddy com HTTPS automático e headers de segurança.
 

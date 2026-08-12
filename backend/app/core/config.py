@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     SUPABASE_PUBLISHABLE_KEY: str
     SUPABASE_SECRET_KEY: str = ""
     SUPABASE_STORAGE_BUCKET: str = "postx-media"
+    COOKIE_STORY_ENABLED: bool = True
 
     DATABASE_URL: str
     DATABASE_POOL_SIZE: int = 8

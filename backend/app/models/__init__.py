@@ -28,7 +28,14 @@ from app.models.instagram import (
     Setting,
     Token,
 )
-from app.models.media import Media, MediaTag, MediaTagLink, MediaVariant, UploadSession
+from app.models.media import (
+    CookieStoryPreset,
+    Media,
+    MediaTag,
+    MediaTagLink,
+    MediaVariant,
+    UploadSession,
+)
 from app.models.operations import (
     AuditLog,
     CampaignLog,
@@ -54,6 +61,7 @@ __all__ = [
     "CampaignProxy",
     "CampaignProxyAssignment",
     "CampaignVersion",
+    "CookieStoryPreset",
     "InsightSnapshot",
     "Job",
     "JobAttempt",

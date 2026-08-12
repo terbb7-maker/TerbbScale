@@ -29,10 +29,13 @@
 | R-025 | Política da Meta proíbe caso de uso específico | Média | Crítico | Revisão de políticas e App Review antes de comercializar |
 | R-026 | Export de cookies vaza ou restaura sessão incorreta | Média | Crítico | Processamento somente na extensão, domínio allowlisted, memória de sessão, fila mascarada, limpeza explícita e proibição em logs/backend |
 | R-027 | Meta invalida cookies ou exige checkpoint | Alta | Médio | Informar falha, abrir login normal e nunca contornar desafio, CAPTCHA ou confirmação adicional |
+| R-028 | Instagram altera endpoints privados de Story/link | Alta | Alto | Adapter mínimo isolado na extensão, erro sanitizado, sem retry cego, versão da extensão e kill switch |
+| R-029 | Story é publicado na conta errada ou duplicado | Média | Crítico | Conferir `ds_user_id` da fila, exigir clique por publicação, manter estado local e nunca repetir automaticamente após resposta ambígua |
+| R-030 | URL do Story aponta para destino incorreto ou inseguro | Média | Alto | Exigir HTTPS sem credenciais, preview do hostname, título limitado e auditoria somente do hostname |
 
 ## Riscos aceitos nesta fase
 
-A implementação está autorizada. O proprietário aceitou o risco operacional do conector local de cookies em 12 de agosto de 2026, condicionado aos controles do ADR-012; vazamento, persistência remota ou contorno de proteções da Meta não foram aceitos.
+A implementação está autorizada. O proprietário aceitou o risco operacional do conector local de cookies e dos endpoints privados usados somente para o Story com link em 12 de agosto de 2026, condicionado aos controles dos ADR-012/013; vazamento, persistência remota, login automático, publicação silenciosa ou contorno de proteções da Meta não foram aceitos.
 
 ## Kill switches necessários
 

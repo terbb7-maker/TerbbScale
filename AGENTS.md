@@ -17,7 +17,7 @@ Antes de ler, criar, alterar, executar ou remover qualquer artefato deste projet
 - As opções recomendadas em `docs/18-DECISOES-PENDENTES.md` foram adotadas como baseline; exceções futuras devem ser registradas.
 - Alterações destrutivas continuam exigindo resolução exata do alvo, validação e registro.
 - Credenciais e tokens nunca podem ser versionados ou exibidos em logs.
-- A integração com Instagram permanece limitada à API oficial com Instagram Login.
+- A conexão, os tokens, as campanhas e os insights permanecem na API oficial com Instagram Login. A única exceção aprovada é a publicação local e manual do Story predefinido com link durante o fluxo por cookie, isolada na extensão conforme ADR-013.
 
 ## Hierarquia documental
 

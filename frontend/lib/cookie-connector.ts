@@ -3,11 +3,21 @@ export type ConnectorQueueItem = {
   file_name: string;
   account_hint: string;
   cookie_count: number;
+  story_status?: "idle" | "publishing" | "published" | "failed";
+  story_link?: string | null;
+  story_error?: string | null;
+  story_published_at?: string | null;
 };
 
 export type ConnectorStatus = {
   items: ConnectorQueueItem[];
   active_index: number;
+};
+
+export type ConnectorStoryResult = {
+  status: ConnectorStatus;
+  published_link: string | null;
+  published_at: string;
 };
 
 type ConnectorResponse<T> = {

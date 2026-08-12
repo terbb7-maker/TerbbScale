@@ -101,7 +101,8 @@ O painel de Engajamento possui seletor segmentado Hoje, Ontem, Mês e Personaliz
 - ação “Testar situação agora” e histórico recente com códigos sanitizados da Meta;
 - atualização por WebSocket `account.health_updated`, com polling de segurança quando o socket estiver indisponível.
 - ação secundária “Conectar com cookie”, preservando como principal o Instagram Login existente;
-- tela separada com instalação/detecção da extensão, importação múltipla de JSON, fila mascarada e etapas ativar sessão, abrir convites, conectar via OAuth e próxima conta;
+- tela separada com instalação/detecção da extensão, preset de mídia/link, importação múltipla de JSON, fila mascarada e etapas ativar sessão, postar Story, abrir convites, conectar via OAuth e próxima conta;
+- seletor de mídia pronta, preview 9:16, link HTTPS, título do adesivo e estado por conta (`idle`, publicando, publicado ou falha sanitizada);
 - nenhum valor de cookie, senha ou 2FA é renderizado, enviado à API ou mantido após o encerramento da sessão da extensão.
 
 ## 6. Biblioteca

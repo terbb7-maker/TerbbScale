@@ -3,7 +3,7 @@
 **Status:** `APROVADO_PARA_IMPLEMENTACAO`  
 **Fase autorizada:** implementação completa por marcos  
 **Implementação autorizada:** sim  
-**Atualizado em:** 31 de julho de 2026
+**Atualizado em:** 12 de agosto de 2026
 
 ## 1. Finalidade
 
@@ -21,7 +21,7 @@ O proprietário aprovou a documentação e autorizou explicitamente a implementa
 
 ## 3. Limites permanentes
 
-- Não usar automação não oficial do Instagram.
+- Não usar automação não oficial do Instagram, exceto a publicação local, iniciada por clique, do Story predefinido com link no conector por cookie aprovada pelo proprietário em 12 de agosto de 2026 e delimitada no ADR-013.
 - Não versionar nem exibir segredos.
 - Não operar recursos externos fora da VPS e do Supabase colocados em escopo.
 - Não ignorar limites, políticas ou revisão da Meta.
@@ -45,7 +45,7 @@ A documentação descreve um produto amplo. Aprovar a visão não significa nece
 
 ## 7. Regra sobre a Meta
 
-Capacidades, permissões, métricas, formatos, limites, versões e ciclos de token da API da Meta são dependências externas mutáveis. Antes da implementação de cada integração, a documentação oficial vigente deverá ser revalidada. Se uma expectativa do produto não for suportada oficialmente, não será usada automação não oficial; o comportamento será limitado, adaptado ou submetido ao proprietário.
+Capacidades, permissões, métricas, formatos, limites, versões e ciclos de token da API da Meta são dependências externas mutáveis. Antes da implementação de cada integração, a documentação oficial vigente deverá ser revalidada. Se uma expectativa do produto não for suportada oficialmente, o comportamento será limitado, adaptado ou submetido ao proprietário. A única exceção atualmente aprovada é o publicador local de Story com link do ADR-013; ela não autoriza login automático, contorno de desafios, publicação em background pelo backend nem outras chamadas privadas.
 
 ## 8. Checklist do gate
 

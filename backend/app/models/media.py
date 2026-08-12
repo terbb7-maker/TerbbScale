@@ -3,6 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     BigInteger,
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
@@ -53,6 +54,32 @@ class Media(Base, UUIDPrimaryKeyMixin, TimestampMixin):
             postgresql_where=deleted_at.is_(None),
         ),
         UniqueConstraint("owner_id", "storage_key", name="uq_media_owner_storage_key"),
+    )
+
+
+class CookieStoryPreset(Base, UUIDPrimaryKeyMixin, TimestampMixin):
+    __tablename__ = "cookie_story_presets"
+
+    owner_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    media_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("media.id", ondelete="CASCADE"), nullable=False
+    )
+    link_url: Mapped[str] = mapped_column(Text, nullable=False)
+    link_title: Mapped[str | None] = mapped_column(String(80))
+
+    __table_args__ = (
+        UniqueConstraint("owner_id", name="uq_cookie_story_presets_owner_id"),
+        Index("ix_cookie_story_presets_media_id", "media_id"),
+        CheckConstraint(
+            "link_url ~ '^https://[^[:space:]]+$'",
+            name="https_link",
+        ),
+        CheckConstraint(
+            "link_title is null or char_length(link_title) between 1 and 80",
+            name="link_title_length",
+        ),
     )
 
 

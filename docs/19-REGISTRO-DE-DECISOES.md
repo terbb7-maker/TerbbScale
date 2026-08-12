@@ -27,7 +27,7 @@ Aprovada por:
 ## ADR-001 — Integração oficial com Instagram Login
 
 - **Data:** 31 de julho de 2026
-- **Status:** aceita
+- **Status:** substituída parcialmente pelo ADR-013
 - **Decisão:** usar exclusivamente Instagram Platform API com Instagram Login, sem Facebook Login ou automação não oficial.
 - **Consequências:** somente contas/capacidades suportadas oficialmente; alterações da Meta podem reduzir funções.
 - **Aprovada por:** requisito original do proprietário.
@@ -126,8 +126,18 @@ Decidido: proxies são opcionais e por usuário; credenciais usam o cofre AES-GC
 ## ADR-012 — Preparação local de sessão por cookies
 
 - **Data:** 12 de agosto de 2026
-- **Status:** aceita e implementada
+- **Status:** aceita e implementada; consequência de publicação substituída pelo ADR-013
 - **Decisão:** manter o Instagram Login atual e adicionar uma alternativa em tela separada, apoiada por extensão Manifest V3, para importar localmente cookies do Instagram, preparar uma fila de sessões e iniciar o mesmo OAuth oficial.
 - **Contexto:** o App da Meta ainda não está aprovado e o proprietário adiciona manualmente contas como testers; a sessão autenticada é necessária para revisar o convite antes do consentimento OAuth.
-- **Consequências:** cookies nunca chegam ao backend/Supabase, somente `instagram.com` é aceito, a fila existe apenas em `chrome.storage.session`, o identificador é mascarado e Facebook/DoubleClick são ignorados. O aceite de convite, checkpoints e consentimentos continuam sujeitos à interface e às confirmações da Meta. Tokens, publicação e consultas permanecem exclusivamente na API oficial.
+- **Consequências:** cookies nunca chegam ao backend/Supabase, somente `instagram.com` é aceito, a fila existe apenas em `chrome.storage.session`, o identificador é mascarado e Facebook/DoubleClick são ignorados. O aceite de convite, checkpoints e consentimentos continuam sujeitos à interface e às confirmações da Meta. Tokens e consultas permanecem exclusivamente na API oficial; a única exceção de publicação é o Story local delimitado no ADR-013.
 - **Aprovada por:** solicitação explícita do proprietário.
+
+## ADR-013 — Story local com link no fluxo por cookie
+
+- **Data:** 12 de agosto de 2026
+- **Status:** aceita e implementada
+- **Decisão:** manter conexão, tokens, campanhas e insights na API oficial, mas permitir que a extensão local publique, por clique, um único Story predefinido com adesivo de link na sessão ativa antes do convite da Meta.
+- **Contexto:** a API oficial vigente aceita publicação de Stories, mas não documenta o adesivo de link desejado; o proprietário forneceu uma extensão funcional como referência e aceitou explicitamente os riscos do método privado.
+- **Consequências:** o preset fica no Supabase, enquanto cookies, CSRF, headers e execução ficam no Chrome; a mídia é entregue por URL assinada de cinco minutos; a conta é conferida por `ds_user_id`; não há login, agendamento ou retentativa automática; endpoints privados podem mudar e o recurso tem kill switch. Campanhas e demais publicações continuam oficiais.
+- **Substitui:** a proibição absoluta de publicação não oficial do ADR-001 e a consequência “publicação exclusivamente oficial” do ADR-012, somente neste fluxo delimitado.
+- **Aprovada por:** solicitação explícita “pode implementar” após apresentação da arquitetura e dos riscos.

@@ -81,6 +81,25 @@ Este plano não autoriza execução. Ele define uma sequência possível após a
 - exclusão respeita referências.
 - thumbnails privadas aparecem no grid e a remoção em massa respeita o tenant e a retenção.
 
+## Marco 3A — Story local durante conexão por cookie
+
+### Entregas
+
+- preset por tenant com mídia da biblioteca e link HTTPS;
+- entrega temporária do original;
+- publicador mínimo de imagem/MP4 na extensão;
+- passo “Postar Story” antes do convite;
+- estado sanitizado por conta na fila local.
+
+### Aceite
+
+- conta ativa confere com o `ds_user_id` da fila;
+- imagem é enquadrada em 1080×1920 e MP4 exige 9:16, até 60 s e 100 MB;
+- URL do original expira em cinco minutos;
+- cookies e headers do Instagram não chegam ao backend/Supabase/logs;
+- checkpoint ou mudança do endpoint gera falha clara e não é contornado;
+- convite e OAuth oficial continuam passos separados.
+
 ## Marco 4 — Campanhas e planejamento
 
 ### Entregas

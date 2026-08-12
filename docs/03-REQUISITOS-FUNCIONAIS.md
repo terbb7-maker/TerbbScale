@@ -43,6 +43,10 @@ Os identificadores `RF-*` são estáveis e usados na matriz de rastreabilidade.
 - **RF-ACC-018:** manter cookies importados exclusivamente na memória temporária da extensão, sem enviá-los à API, ao Supabase, à telemetria ou aos logs.
 - **RF-ACC-019:** permitir montar uma fila local, ativar a sessão atual, abrir a área de convites da Meta, iniciar o OAuth oficial e avançar para a próxima conta.
 - **RF-ACC-020:** ignorar domínios externos no export, substituir somente cookies do Instagram ao alternar contas e não contornar checkpoint, CAPTCHA ou confirmação adicional.
+- **RF-ACC-021:** permitir configurar um único Story predefinido por tenant com mídia pronta da biblioteca, link HTTPS e título opcional do adesivo.
+- **RF-ACC-022:** inserir antes do convite uma ação manual “Postar Story”, executada localmente pela extensão na conta ativa e com conferência do `ds_user_id` da fila.
+- **RF-ACC-023:** entregar à extensão apenas mídia por URL assinada de cinco minutos; cookies, CSRF e cabeçalhos do Instagram não atravessam API, Supabase, Redis, WebSocket ou logs.
+- **RF-ACC-024:** registrar na fila temporária sucesso ou falha sanitizada por conta, permitir nova tentativa explícita e nunca contornar checkpoint, CAPTCHA ou confirmação adicional.
 
 ## RF-MED — Biblioteca de mídias
 

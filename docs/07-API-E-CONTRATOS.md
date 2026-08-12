@@ -77,6 +77,17 @@ Mensagens públicas não contêm stack trace, segredo, token, SQL ou resposta se
 | DELETE | `/accounts/{id}` | Remove conexão com confirmação |
 | POST | `/accounts/bulk-remove` | Remove até 200 contas do tenant, revoga tokens e cancela jobs futuros |
 
+### `/cookie-story`
+
+| Método | Rota | Resultado |
+|---|---|---|
+| GET | `/cookie-story/preset` | Lê o preset do tenant com preview temporário |
+| PUT | `/cookie-story/preset` | Cria ou substitui mídia/link do preset |
+| DELETE | `/cookie-story/preset` | Remove o preset |
+| POST | `/cookie-story/delivery` | Valida novamente e assina o original por cinco minutos para a extensão |
+
+`/delivery` nunca recebe cookie ou identificador do Instagram e nunca executa a publicação. A resposta sensível não pode ser registrada e expira rapidamente.
+
 ### `/media`
 
 | Método | Rota | Resultado |

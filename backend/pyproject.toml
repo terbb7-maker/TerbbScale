@@ -57,7 +57,7 @@ ignore = ["S101"]
 [tool.ruff.lint.per-file-ignores]
 "app/modules/campaigns/service.py" = ["S311"]
 "app/workers/publisher.py" = ["S311"]
-"tests/*" = ["B017", "S105"]
+"tests/*" = ["B017", "S105", "S106"]
 
 [tool.mypy]
 python_version = "3.13"

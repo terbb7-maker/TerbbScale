@@ -16,6 +16,7 @@ from app.modules.accounts.router import router as accounts_router
 from app.modules.admin.router import router as admin_router
 from app.modules.auth.router import router as auth_router
 from app.modules.campaigns.router import router as campaigns_router
+from app.modules.cookie_story.router import router as cookie_story_router
 from app.modules.dashboard.router import router as dashboard_router
 from app.modules.health import router as health_router
 from app.modules.logs.router import router as logs_router
@@ -57,6 +58,7 @@ install_error_handlers(app)
 for router in (
     auth_router,
     accounts_router,
+    cookie_story_router,
     media_router,
     campaigns_router,
     dashboard_router,

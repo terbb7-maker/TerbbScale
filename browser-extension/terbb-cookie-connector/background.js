@@ -1,3 +1,8 @@
+import {
+  clearInstagramHeaders,
+} from "./instagram-session.js";
+import { publishStoryFromDelivery } from "./story-publisher.js";
+
 const STORAGE_KEY = "terbb_cookie_queue_v1";
 const INSTAGRAM_ORIGIN = "https://www.instagram.com";
 const INVITES_URL = "https://www.instagram.com/accounts/manage_access/";
@@ -31,6 +36,8 @@ async function handleMessage(message) {
     case "OPEN_INVITES":
       await chrome.tabs.create({ url: INVITES_URL, active: true });
       return { opened: true };
+    case "PUBLISH_STORY":
+      return publishCurrentStory(message.payload);
     case "NEXT_ACCOUNT":
       return activateNext();
     default:
@@ -71,6 +78,8 @@ function sanitizeBatch(batch, index) {
     fileName: cleanFileName(batch.file_name, index),
     accountHint: maskAccountId(accountId.value),
     cookies,
+    accountId: accountId.value,
+    story: { status: "idle", publishedLink: null, error: null, publishedAt: null },
   };
 }
 
@@ -120,6 +129,7 @@ async function activateCurrent() {
   const item = queue.items[queue.activeIndex];
   if (!item) throw new Error("A fila está vazia.");
   await replaceInstagramCookies(item.cookies);
+  await clearInstagramHeaders();
   await chrome.tabs.create({ url: `${INSTAGRAM_ORIGIN}/`, active: true });
   return publicStatus(queue);
 }
@@ -131,9 +141,45 @@ async function activateNext() {
   }
   queue.activeIndex += 1;
   await replaceInstagramCookies(queue.items[queue.activeIndex].cookies);
+  await clearInstagramHeaders();
   await chrome.storage.session.set({ [STORAGE_KEY]: queue });
   await chrome.tabs.create({ url: `${INSTAGRAM_ORIGIN}/`, active: true });
   return publicStatus(queue);
+}
+
+async function publishCurrentStory(payload) {
+  const queue = await getQueue();
+  const item = queue.items[queue.activeIndex];
+  if (!item) throw new Error("A fila está vazia.");
+  if (!payload?.delivery) throw new Error("O Story predefinido não foi recebido.");
+  if (item.story?.status === "publishing") throw new Error("Já existe um Story em publicação.");
+
+  item.story = { status: "publishing", publishedLink: null, error: null, publishedAt: null };
+  await chrome.storage.session.set({ [STORAGE_KEY]: queue });
+  try {
+    const result = await publishStoryFromDelivery(payload.delivery, item.accountId);
+    item.story = {
+      status: "published",
+      publishedLink: result.publishedLink || null,
+      error: null,
+      publishedAt: new Date().toISOString(),
+    };
+    await chrome.storage.session.set({ [STORAGE_KEY]: queue });
+    return {
+      status: publicStatus(queue),
+      published_link: item.story.publishedLink,
+      published_at: item.story.publishedAt,
+    };
+  } catch (error) {
+    item.story = {
+      status: "failed",
+      publishedLink: null,
+      error: safeError(error),
+      publishedAt: null,
+    };
+    await chrome.storage.session.set({ [STORAGE_KEY]: queue });
+    throw error;
+  }
 }
 
 async function replaceInstagramCookies(cookies) {
@@ -169,7 +215,13 @@ async function removeCookie(cookie) {
 async function getQueue() {
   const stored = await chrome.storage.session.get(STORAGE_KEY);
   const queue = stored[STORAGE_KEY];
-  return queue && Array.isArray(queue.items) ? queue : emptyQueue();
+  if (!queue || !Array.isArray(queue.items)) return emptyQueue();
+  queue.items = queue.items.map((item) => ({
+    ...item,
+    accountId: item.accountId || item.cookies?.find((cookie) => cookie.name === "ds_user_id")?.value,
+    story: item.story || { status: "idle", publishedLink: null, error: null, publishedAt: null },
+  }));
+  return queue;
 }
 
 function emptyQueue() {
@@ -184,6 +236,10 @@ function publicStatus(queue) {
       file_name: item.fileName,
       account_hint: item.accountHint,
       cookie_count: item.cookies.length,
+      story_status: item.story?.status || "idle",
+      story_link: item.story?.publishedLink || null,
+      story_error: item.story?.error || null,
+      story_published_at: item.story?.publishedAt || null,
     })),
   };
 }
@@ -203,5 +259,9 @@ function maskAccountId(value) {
 
 function safeError(error) {
   const message = error instanceof Error ? error.message : "Falha inesperada na extensão.";
-  return message.replace(/sessionid=[^\s&]+/gi, "sessionid=[oculto]").slice(0, 300);
+  return message
+    .replace(/sessionid=[^\s&]+/gi, "sessionid=[oculto]")
+    .replace(/csrftoken=[^\s&]+/gi, "csrftoken=[oculto]")
+    .replace(/https:\/\/[^\s]+supabase\.co[^\s]*/gi, "[url-temporaria-oculta]")
+    .slice(0, 300);
 }

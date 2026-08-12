@@ -1,10 +1,12 @@
-# Integração oficial com Instagram
+# Integração com Instagram
 
 ## 1. Regra da integração
 
-O PostX usará exclusivamente a **Instagram Platform API com Instagram Login** para conectar a conta ao backend, obter tokens, publicar e consultar dados. Não usará Facebook Login, scraping, senha do Instagram nem endpoints privados.
+O PostX usa a **Instagram Platform API com Instagram Login** para conectar a conta ao backend, obter tokens, executar campanhas e consultar dados. Não usa Facebook Login, senha do Instagram ou scraping no backend.
 
-Por decisão explícita do proprietário em 12 de agosto de 2026, a interface pode oferecer uma extensão local opcional para restaurar no navegador uma sessão já autorizada por meio de um export de cookies. Essa preparação não substitui o OAuth, não produz token de API, não envia cookies ao backend e não automatiza publicação. A extensão somente aceita cookies de `instagram.com`, mantém a fila em armazenamento de sessão não sincronizado e não contorna desafios da Meta.
+Por decisões explícitas do proprietário em 12 de agosto de 2026, a interface oferece uma extensão local opcional para restaurar no navegador uma sessão já autorizada por meio de export de cookies e, por clique, publicar um Story predefinido com link antes do convite. Essa operação isolada usa a sessão web e endpoints privados do Instagram porque a API oficial vigente publica Stories, mas não documenta parâmetro para o adesivo de link. A extensão somente aceita cookies de `instagram.com`, mantém fila/headers em armazenamento de sessão não sincronizado e não contorna desafios da Meta.
+
+Essa exceção não substitui OAuth, não produz token de API e não autoriza campanhas, agendamento, insights, health checks ou publicação remota por cookie. Tudo isso permanece oficial.
 
 ## 2. Elegibilidade
 
@@ -80,7 +82,7 @@ Requisitos: state forte, PKCE quando suportado, HTTPS, timeout, callback idempot
 
 O arquivo original e seus valores nunca são persistidos no banco. Ao trocar de conta, somente os cookies do Instagram são removidos e substituídos.
 
-## 6. Fluxo de publicação
+## 6. Fluxo de publicação oficial
 
 A publicação oficial normalmente é assíncrona em duas etapas:
 
@@ -92,6 +94,18 @@ A publicação oficial normalmente é assíncrona em duas etapas:
 6. reconciliar e coletar insights depois.
 
 O worker deve tratar criação e publicação como operações distintas e persistir os IDs externos entre elas.
+
+### 6.1 Story local com link durante a conexão
+
+1. o tenant escolhe uma mídia `ready` da biblioteca e salva link HTTPS/título;
+2. o backend persiste apenas o preset e valida tipo, tamanho, dimensões e duração;
+3. após ativar a sessão, o Chrome captura localmente os headers web necessários;
+4. ao clicar em “Postar Story”, a UI solicita uma URL assinada do original com TTL de cinco minutos;
+5. a extensão confere o `ds_user_id`, baixa a mídia diretamente do Storage, enquadra imagem em 1080×1920 quando necessário e envia imagem/MP4 ao Instagram;
+6. a extensão configura o Story e o adesivo de link por endpoint privado, mantendo cookies, CSRF e headers no navegador;
+7. a fila recebe somente estado local sanitizado e então o operador segue para convite e OAuth.
+
+Não há execução automática ao ativar sessão, retentativa cega, agendamento, processamento no backend ou persistência remota da resposta privada. O botão pode ser desativado por configuração de ambiente. Mudanças do Instagram podem quebrar esse fluxo sem aviso.
 
 ## 7. URLs de mídia
 
@@ -114,7 +128,7 @@ O PostX modela:
 
 Compatibilidade real depende de mídia, conta, versão e endpoint. Limites de codec, proporção, duração, tamanho, legenda, capa e número de itens devem ser carregados de uma matriz versionada e revalidados na documentação oficial.
 
-Não haverá “fallback” para mecanismo não oficial.
+Campanhas não terão fallback não oficial. A exceção é somente o Story local do item 6.1, durante a conexão por cookie e iniciado por clique.
 
 ## 9. Tokens
 

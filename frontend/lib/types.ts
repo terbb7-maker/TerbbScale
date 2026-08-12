@@ -185,6 +185,39 @@ export type Media = {
   created_at: string;
 };
 
+export type CookieStoryPreset = {
+  id: string;
+  media_id: string;
+  media_name: string;
+  media_kind: "image" | "video";
+  mime_type: string;
+  size_bytes: number;
+  width: number | null;
+  height: number | null;
+  duration_ms: number | null;
+  preview_url: string | null;
+  link_url: string;
+  link_title: string | null;
+  updated_at: string;
+};
+
+export type CookieStoryDelivery = {
+  preset_id: string;
+  preset_version: string;
+  media_id: string;
+  media_url: string;
+  media_name: string;
+  media_kind: "image" | "video";
+  mime_type: string;
+  size_bytes: number;
+  width: number;
+  height: number;
+  duration_ms: number | null;
+  link_url: string;
+  link_title: string | null;
+  expires_at: string;
+};
+
 export type Campaign = {
   id: string;
   name: string;

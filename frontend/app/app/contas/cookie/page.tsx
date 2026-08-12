@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,6 +11,7 @@ import {
   FileJson,
   Link2,
   LoaderCircle,
+  Send,
   Puzzle,
   ShieldCheck,
   Trash2,
@@ -20,11 +21,14 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { PageHeader } from "@/components/page-header";
+import { CookieStoryPresetCard } from "@/components/cookie-story-preset";
 import { api } from "@/lib/api";
 import {
   connectorCommand,
+  type ConnectorStoryResult,
   type ConnectorStatus,
 } from "@/lib/cookie-connector";
+import type { CookieStoryDelivery, CookieStoryPreset } from "@/lib/types";
 
 type CookieRecord = {
   domain?: unknown;
@@ -54,6 +58,12 @@ export default function CookieConnectPage() {
   const [status, setStatus] = useState<ConnectorStatus>(EMPTY_STATUS);
   const [readingFiles, setReadingFiles] = useState(false);
   const [sessionActivated, setSessionActivated] = useState(false);
+  const [publishingStory, setPublishingStory] = useState(false);
+
+  const storyPreset = useQuery({
+    queryKey: ["cookie-story-preset"],
+    queryFn: () => api<CookieStoryPreset | null>("/cookie-story/preset"),
+  });
 
   const connect = useMutation({
     mutationFn: () => api<{ authorization_url: string }>("/accounts/connect", { method: "POST" }),
@@ -126,6 +136,26 @@ export default function CookieConnectPage() {
     }
   }
 
+  async function publishStory() {
+    setPublishingStory(true);
+    const toastId = toast.loading("Preparando e publicando o Story…");
+    try {
+      const delivery = await api<CookieStoryDelivery>("/cookie-story/delivery", { method: "POST" });
+      const result = await connectorCommand<ConnectorStoryResult>(
+        "PUBLISH_STORY",
+        { delivery },
+        180_000,
+      );
+      setStatus(result.status);
+      toast.success("Story publicado na conta atual.", { id: toastId });
+    } catch (error) {
+      await refreshStatus().catch(() => undefined);
+      toast.error(error instanceof Error ? error.message : "Não foi possível publicar o Story.", { id: toastId });
+    } finally {
+      setPublishingStory(false);
+    }
+  }
+
   async function openInvites() {
     try {
       await connectorCommand("OPEN_INVITES");
@@ -165,7 +195,7 @@ export default function CookieConnectPage() {
       <PageHeader
         eyebrow="Conector local"
         title="Conectar com cookie"
-        description="Prepare a sessão no navegador e finalize a conexão pelo OAuth oficial da Meta, sem enviar cookies ao Terbb Scale."
+        description="Prepare a sessão, publique o Story predefinido localmente e finalize a conexão pelo OAuth oficial da Meta."
         actions={<Link className="button-secondary" href="/app/contas"><ArrowLeft size={16} /> Voltar às contas</Link>}
       />
 
@@ -180,6 +210,8 @@ export default function CookieConnectPage() {
           </div>
         </div>
       </section>
+
+      <CookieStoryPresetCard />
 
       {extensionReady === false && (
         <section className="panel mb-5 p-6">
@@ -212,15 +244,20 @@ export default function CookieConnectPage() {
             <Step number="2" title="Ativar a sessão" description="Substitui somente os cookies atuais do Instagram e abre a conta em uma nova aba." done={sessionActivated}>
               <button className="button-secondary" disabled={!active} onClick={activateSession}><Cookie size={16} /> Ativar e abrir Instagram</button>
             </Step>
-            <Step number="3" title="Aceitar convite" description="Abre Permissões de apps para você revisar e aceitar o convite pendente da Meta.">
+            <Step number="3" title="Postar o Story" description="Publica o Story predefinido com link usando somente a sessão ativa neste navegador." done={active?.story_status === "published"}>
+              <button className="button-secondary" disabled={!active || !sessionActivated || !storyPreset.data || publishingStory} onClick={publishStory}>
+                {publishingStory ? <LoaderCircle className="animate-spin" size={16} /> : <Send size={16} />} {publishingStory ? "Publicando…" : active?.story_status === "published" ? "Publicar novamente" : "Postar Story"}
+              </button>
+            </Step>
+            <Step number="4" title="Aceitar convite" description="Abre Permissões de apps para você revisar e aceitar o convite pendente da Meta.">
               <button className="button-secondary" disabled={!active || !sessionActivated} onClick={openInvites}><ExternalLink size={16} /> Abrir convites</button>
             </Step>
-            <Step number="4" title="Conectar à Meta" description="Inicia o Instagram Login oficial. O Terbb Scale recebe apenas o código OAuth e o token oficial.">
+            <Step number="5" title="Conectar à Meta" description="Inicia o Instagram Login oficial. O Terbb Scale recebe apenas o código OAuth e o token oficial.">
               <button className="button-primary" disabled={!active || !sessionActivated || connect.isPending} onClick={() => connect.mutate()}>
                 {connect.isPending ? <LoaderCircle className="animate-spin" size={16} /> : <Link2 size={16} />} Conectar conta
               </button>
             </Step>
-            <Step number="5" title="Próxima conta" description="Remove a sessão atual do Instagram, ativa o próximo arquivo da fila e abre a nova conta.">
+            <Step number="6" title="Próxima conta" description="Remove a sessão atual do Instagram, ativa o próximo arquivo da fila e abre a nova conta.">
               <button className="button-secondary" disabled={!hasNext} onClick={nextAccount}><ArrowRight size={16} /> Ir para próxima conta</button>
             </Step>
           </div>
@@ -244,6 +281,8 @@ export default function CookieConnectPage() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{item.file_name}</p>
                     <p className="mt-1 text-[11px] text-zinc-600">Conta {item.account_hint} · {item.cookie_count} cookies válidos</p>
+                    {item.story_status === "published" && <p className="mt-1 text-[11px] text-emerald-400">Story publicado</p>}
+                    {item.story_status === "failed" && <p className="mt-1 truncate text-[11px] text-red-400" title={item.story_error ?? undefined}>Falha no Story</p>}
                   </div>
                 </div>
               </div>

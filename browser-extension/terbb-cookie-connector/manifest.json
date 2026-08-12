@@ -1,19 +1,22 @@
 {
   "manifest_version": 3,
   "name": "Terbb Cookie Connector",
-  "version": "1.0.0",
-  "description": "Restaura localmente sessões autorizadas do Instagram e coordena a conexão oficial com o Terbb Scale.",
+  "version": "1.1.0",
+  "description": "Restaura sessões do Instagram, publica o Story predefinido localmente e coordena a conexão oficial com o Terbb Scale.",
   "permissions": [
     "cookies",
     "storage",
-    "tabs"
+    "tabs",
+    "webRequest"
   ],
   "host_permissions": [
     "https://instagram.com/*",
-    "https://*.instagram.com/*"
+    "https://*.instagram.com/*",
+    "https://kctretlyslltvkfydoyy.supabase.co/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {

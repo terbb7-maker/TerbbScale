@@ -148,6 +148,16 @@ Restrição única proposta: `(owner_id, instagram_user_id)` para contas não re
 
 Índices propostos: `(owner_id, created_at)`, `(owner_id, media_kind, status)` e `(owner_id, content_hash)`.
 
+### `cookie_story_presets`
+
+- `owner_id` único;
+- `media_id` referenciando mídia do mesmo tenant validada pela API;
+- `link_url` HTTPS;
+- `link_title` opcional, até 80 caracteres;
+- timestamps.
+
+O preset contém somente configuração de produto. Cookies, `csrftoken`, headers de requisição, URL assinada e resultado bruto do Instagram nunca entram nessa tabela. RLS limita linhas ao proprietário; o Data API não recebe privilégios diretos para a tabela e o backend gera URLs do original com TTL de cinco minutos.
+
 ### `campaigns`
 
 - `owner_id`
