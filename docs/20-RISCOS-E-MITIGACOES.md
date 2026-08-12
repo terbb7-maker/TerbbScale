@@ -27,10 +27,12 @@
 | R-023 | Falha de aprovação/admin abuse | Baixa | Crítico | MFA, reauth, RBAC, auditoria e alertas |
 | R-024 | Escopo inicial grande atrasa validação | Alta | Alto | Marcos, MVP vertical e gates de aceite |
 | R-025 | Política da Meta proíbe caso de uso específico | Média | Crítico | Revisão de políticas e App Review antes de comercializar |
+| R-026 | Export de cookies vaza ou restaura sessão incorreta | Média | Crítico | Processamento somente na extensão, domínio allowlisted, memória de sessão, fila mascarada, limpeza explícita e proibição em logs/backend |
+| R-027 | Meta invalida cookies ou exige checkpoint | Alta | Médio | Informar falha, abrir login normal e nunca contornar desafio, CAPTCHA ou confirmação adicional |
 
 ## Riscos aceitos nesta fase
 
-Nenhum risco de implementação foi aceito, pois a implementação ainda não foi autorizada. A documentação apenas propõe mitigação.
+A implementação está autorizada. O proprietário aceitou o risco operacional do conector local de cookies em 12 de agosto de 2026, condicionado aos controles do ADR-012; vazamento, persistência remota ou contorno de proteções da Meta não foram aceitos.
 
 ## Kill switches necessários
 
@@ -42,4 +44,3 @@ Nenhum risco de implementação foi aceito, pois a implementação ainda não fo
 - por tipo de operação.
 
 Kill switch pausa novos jobs; não desfaz publicação já aceita pela Meta.
-

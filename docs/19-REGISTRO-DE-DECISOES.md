@@ -122,3 +122,12 @@ Decidido: proxies são opcionais e por usuário; credenciais usam o cofre AES-GC
 - **Contexto:** a distribuição global fazia contas sequenciais permanecerem na mesma mídia, permitia repetição aleatória antes de uma conta esgotar seu conjunto e deixava jobs posteriores ultrapassarem predecessores sob concorrência.
 - **Consequências:** novas versões de campanha recebem o plano corrigido e auditável; jobs já materializados preservam sua mídia, mas passam a respeitar a ordem persistida após o backfill; replanejar mídia de campanha ativa exige operação explícita para não alterar publicação aprovada.
 - **Aprovada por:** autorização explícita do proprietário após a auditoria.
+
+## ADR-012 — Preparação local de sessão por cookies
+
+- **Data:** 12 de agosto de 2026
+- **Status:** aceita e implementada
+- **Decisão:** manter o Instagram Login atual e adicionar uma alternativa em tela separada, apoiada por extensão Manifest V3, para importar localmente cookies do Instagram, preparar uma fila de sessões e iniciar o mesmo OAuth oficial.
+- **Contexto:** o App da Meta ainda não está aprovado e o proprietário adiciona manualmente contas como testers; a sessão autenticada é necessária para revisar o convite antes do consentimento OAuth.
+- **Consequências:** cookies nunca chegam ao backend/Supabase, somente `instagram.com` é aceito, a fila existe apenas em `chrome.storage.session`, o identificador é mascarado e Facebook/DoubleClick são ignorados. O aceite de convite, checkpoints e consentimentos continuam sujeitos à interface e às confirmações da Meta. Tokens, publicação e consultas permanecem exclusivamente na API oficial.
+- **Aprovada por:** solicitação explícita do proprietário.

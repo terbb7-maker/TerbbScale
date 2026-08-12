@@ -100,6 +100,9 @@ O painel de Engajamento possui seletor segmentado Hoje, Ontem, Mês e Personaliz
 - badge de situação operacional, confiança, última verificação, último sucesso, falhas consecutivas e ação recomendada;
 - ação “Testar situação agora” e histórico recente com códigos sanitizados da Meta;
 - atualização por WebSocket `account.health_updated`, com polling de segurança quando o socket estiver indisponível.
+- ação secundária “Conectar com cookie”, preservando como principal o Instagram Login existente;
+- tela separada com instalação/detecção da extensão, importação múltipla de JSON, fila mascarada e etapas ativar sessão, abrir convites, conectar via OAuth e próxima conta;
+- nenhum valor de cookie, senha ou 2FA é renderizado, enviado à API ou mantido após o encerramento da sessão da extensão.
 
 ## 6. Biblioteca
 

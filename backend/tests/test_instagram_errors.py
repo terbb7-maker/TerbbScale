@@ -1,7 +1,22 @@
+from urllib.parse import parse_qs, urlparse
+
 import httpx
 import pytest
 
 from app.integrations.instagram import InstagramAPIError, InstagramClient
+
+
+def test_authorization_url_reuses_existing_instagram_session() -> None:
+    url = InstagramClient(app_id="instagram-app", app_secret="secret").authorization_url(
+        redirect_uri="https://example.com/app/contas/callback",
+        scopes=["instagram_business_basic", "instagram_business_content_publish"],
+        state="oauth-state",
+    )
+
+    query = parse_qs(urlparse(url).query)
+    assert "force_reauth" not in query
+    assert query["client_id"] == ["instagram-app"]
+    assert query["state"] == ["oauth-state"]
 
 
 @pytest.mark.parametrize(

@@ -6,6 +6,7 @@ Ativos críticos:
 
 - App Secrets dos usuários;
 - tokens do Instagram;
+- exports de cookies processados localmente pela extensão opcional;
 - sessão do usuário/admin;
 - mídias privadas;
 - capacidade de publicar;
@@ -110,6 +111,8 @@ Proibido registrar:
 
 Sanitização deve ocorrer antes do logger, não apenas na interface.
 Loggers de transporte HTTP (`httpx`/`httpcore`) permanecem em `WARNING` também nos processos Celery, pois URLs de integrações podem carregar credenciais na query string.
+
+Exports de cookies nunca atravessam `fetch`, API, Supabase, Redis ou WebSocket. A extensão aceita apenas o domínio `instagram.com`, guarda a fila em `chrome.storage.session` restrito a contextos confiáveis, mascara o identificador exibido e remove os dados temporários quando solicitado ou quando a sessão do navegador termina. Arquivos reais não podem ser incluídos em fixtures, screenshots ou pacotes de distribuição.
 
 ## 10. Auditoria
 

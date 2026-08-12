@@ -8,6 +8,7 @@
 | Dados de mídia | RF-MED-006 | 06, 10 | Marco 3 |
 | Instagram Login sem Facebook Login | RF-ACC-001 | 08 | Marco 2 |
 | Tela e ações de contas | RF-ACC-* | 07, 12 | Marco 2 |
+| Preparação local por cookies | RF-ACC-017 a RF-ACC-020 | 08, 12, 13, 19 ADR-012 | Cookies somente na sessão da extensão; conexão final usa OAuth oficial |
 | Remoção em massa | RF-ACC-016, RF-MED-012 e Proxy Manager | 07, 12, 13 | Até 200 itens, tenant isolado, confirmação e auditoria |
 | Situação operacional ao vivo | RF-ACC-011 a RF-ACC-015 | 04, 06, 07, 08, 09, 12, 16 | Consulta oficial, histórico, WebSocket e bloqueio seguro de jobs |
 | Criar campanhas visuais | RF-CAM-* | 04, 12 | Marco 4 |

@@ -26,7 +26,11 @@ function Callback() {
       method: "POST",
       body: JSON.stringify({ code, state }),
     })
-      .then(() => router.replace("/app/contas"))
+      .then(() => {
+        const returnTo = sessionStorage.getItem("terbb-account-connect-return");
+        sessionStorage.removeItem("terbb-account-connect-return");
+        router.replace(returnTo?.startsWith("/app/contas") ? returnTo : "/app/contas");
+      })
       .catch((error) => setMessage(error.message));
   }, [code, router, state]);
 

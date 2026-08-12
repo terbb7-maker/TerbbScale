@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, Camera, Link2, MoreHorizontal, RefreshCw, ShieldAlert, Trash2 } from "lucide-react";
+import { Activity, Camera, Cookie, Link2, MoreHorizontal, RefreshCw, ShieldAlert, Trash2 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -73,9 +74,14 @@ export default function AccountsPage() {
         title="Contas"
         description="Conecte e gerencie contas usando exclusivamente a autenticação oficial do Instagram."
         actions={
-          <button className="button-primary" onClick={() => connect.mutate()} disabled={connect.isPending}>
-            <Link2 size={16} /> Conectar Instagram
-          </button>
+          <>
+            <Link className="button-secondary" href="/app/contas/cookie">
+              <Cookie size={16} /> Conectar com cookie
+            </Link>
+            <button className="button-primary" onClick={() => connect.mutate()} disabled={connect.isPending}>
+              <Link2 size={16} /> Conectar Instagram
+            </button>
+          </>
         }
       />
       {!!missingInsights.length && (

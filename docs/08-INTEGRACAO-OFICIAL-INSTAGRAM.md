@@ -1,8 +1,10 @@
 # Integração oficial com Instagram
 
-## 1. Regra inegociável
+## 1. Regra da integração
 
-O PostX usará exclusivamente a **Instagram Platform API com Instagram Login**. Não usará Facebook Login, scraping, automação de navegador, cookies de sessão ou senha do Instagram.
+O PostX usará exclusivamente a **Instagram Platform API com Instagram Login** para conectar a conta ao backend, obter tokens, publicar e consultar dados. Não usará Facebook Login, scraping, senha do Instagram nem endpoints privados.
+
+Por decisão explícita do proprietário em 12 de agosto de 2026, a interface pode oferecer uma extensão local opcional para restaurar no navegador uma sessão já autorizada por meio de um export de cookies. Essa preparação não substitui o OAuth, não produz token de API, não envia cookies ao backend e não automatiza publicação. A extensão somente aceita cookies de `instagram.com`, mantém a fila em armazenamento de sessão não sincronizado e não contorna desafios da Meta.
 
 ## 2. Elegibilidade
 
@@ -66,6 +68,17 @@ sequenceDiagram
 ```
 
 Requisitos: state forte, PKCE quando suportado, HTTPS, timeout, callback idempotente e ausência de token em URL de retorno da UI.
+
+### 5.1 Preparação opcional por cookie local
+
+1. o operador instala a extensão local distribuída pelo Terbb Scale;
+2. a tela `/app/contas/cookie` entrega o export diretamente à extensão, sem requisição de rede;
+3. a extensão valida `sessionid` e `ds_user_id`, ignora cookies fora de `instagram.com` e restaura a sessão no Chrome;
+4. o operador abre a área de convites e conclui as confirmações exigidas pela Meta;
+5. a UI chama o mesmo `POST /accounts/connect` usado pelo fluxo normal;
+6. o callback e o armazenamento do token seguem integralmente o fluxo OAuth oficial acima.
+
+O arquivo original e seus valores nunca são persistidos no banco. Ao trocar de conta, somente os cookies do Instagram são removidos e substituídos.
 
 ## 6. Fluxo de publicação
 

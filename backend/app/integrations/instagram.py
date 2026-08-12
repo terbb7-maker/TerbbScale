@@ -56,7 +56,6 @@ class InstagramClient:
                 "response_type": "code",
                 "scope": ",".join(scopes),
                 "state": state,
-                "force_reauth": "true",
             }
         )
         return f"{str(settings.INSTAGRAM_OAUTH_BASE_URL).rstrip('/')}/authorize?{query}"

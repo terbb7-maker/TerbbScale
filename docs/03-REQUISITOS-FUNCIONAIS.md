@@ -39,6 +39,10 @@ Os identificadores `RF-*` são estáveis e usados na matriz de rastreabilidade.
 - **RF-ACC-014:** disponibilizar verificação manual, histórico recente, códigos sanitizados e atualização em tempo quase real.
 - **RF-ACC-015:** suspender e reagendar publicações de contas com ação necessária, sem consumir tentativas enquanto o bloqueio persistir.
 - **RF-ACC-016:** permitir remover até 200 contas selecionadas em uma única ação, revogando tokens e cancelando jobs futuros das contas removidas.
+- **RF-ACC-017:** oferecer, sem substituir o Instagram Login existente, um conector opcional de navegador que importe localmente exports JSON de cookies pertencentes a `instagram.com`.
+- **RF-ACC-018:** manter cookies importados exclusivamente na memória temporária da extensão, sem enviá-los à API, ao Supabase, à telemetria ou aos logs.
+- **RF-ACC-019:** permitir montar uma fila local, ativar a sessão atual, abrir a área de convites da Meta, iniciar o OAuth oficial e avançar para a próxima conta.
+- **RF-ACC-020:** ignorar domínios externos no export, substituir somente cookies do Instagram ao alternar contas e não contornar checkpoint, CAPTCHA ou confirmação adicional.
 
 ## RF-MED — Biblioteca de mídias
 
