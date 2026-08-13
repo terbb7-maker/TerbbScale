@@ -10,6 +10,10 @@ Extensão local do Chrome usada pela tela **Contas > Conectar com cookie**.
 4. Selecione esta pasta.
 5. Atualize a tela de conexão do Terbb Scale.
 
+Se a extensão já estava instalada, clique em **Recarregar** no cartão dela em
+`chrome://extensions` e depois atualize a página do Terbb Scale. A versão mínima
+para publicação de Story é **1.2.1**.
+
 ## Segurança
 
 - aceita somente cookies pertencentes a `instagram.com`;

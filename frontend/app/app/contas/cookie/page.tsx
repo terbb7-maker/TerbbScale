@@ -47,6 +47,18 @@ type CookieBatch = {
 };
 
 const EMPTY_STATUS: ConnectorStatus = { items: [], active_index: 0 };
+const REQUIRED_EXTENSION_VERSION = "1.2.1";
+
+function isVersionAtLeast(version: string | null, minimum: string) {
+  if (!version) return false;
+  const current = version.split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const required = minimum.split(".").map((part) => Number.parseInt(part, 10) || 0);
+  for (let index = 0; index < Math.max(current.length, required.length); index += 1) {
+    if ((current[index] ?? 0) > (required[index] ?? 0)) return true;
+    if ((current[index] ?? 0) < (required[index] ?? 0)) return false;
+  }
+  return true;
+}
 
 function currentItem(status: ConnectorStatus) {
   return status.items[status.active_index] ?? null;
@@ -55,6 +67,7 @@ function currentItem(status: ConnectorStatus) {
 export default function CookieConnectPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [extensionReady, setExtensionReady] = useState<boolean | null>(null);
+  const [extensionVersion, setExtensionVersion] = useState<string | null>(null);
   const [status, setStatus] = useState<ConnectorStatus>(EMPTY_STATUS);
   const [readingFiles, setReadingFiles] = useState(false);
   const [sessionActivated, setSessionActivated] = useState(false);
@@ -82,11 +95,15 @@ export default function CookieConnectPage() {
 
   useEffect(() => {
     connectorCommand<{ version: string }>("PING", undefined, 2_000)
-      .then(() => {
+      .then((extension) => {
+        setExtensionVersion(extension.version);
         setExtensionReady(true);
         return refreshStatus();
       })
-      .catch(() => setExtensionReady(false));
+      .catch(() => {
+        setExtensionVersion(null);
+        setExtensionReady(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -189,6 +206,8 @@ export default function CookieConnectPage() {
 
   const active = currentItem(status);
   const hasNext = status.active_index + 1 < status.items.length;
+  const extensionCompatible = extensionReady === true
+    && isVersionAtLeast(extensionVersion, REQUIRED_EXTENSION_VERSION);
 
   return (
     <>
@@ -228,6 +247,21 @@ export default function CookieConnectPage() {
         </section>
       )}
 
+      {extensionReady === true && !extensionCompatible && (
+        <section className="panel mb-5 border-amber-500/30 p-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex gap-4">
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-300"><Puzzle size={20} /></span>
+              <div>
+                <h2 className="font-semibold">Atualize o Terbb Cookie Connector</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">A versão instalada é {extensionVersion ?? "desconhecida"}. Baixe a versão {REQUIRED_EXTENSION_VERSION}, substitua a pasta, clique em “Recarregar” em <strong className="text-zinc-300">chrome://extensions</strong> e atualize esta página.</p>
+              </div>
+            </div>
+            <a className="button-primary shrink-0" href="/terbb-cookie-connector.zip" download><Download size={16} /> Baixar atualização</a>
+          </div>
+        </section>
+      )}
+
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="panel overflow-hidden">
           <div className="border-b p-5">
@@ -237,7 +271,7 @@ export default function CookieConnectPage() {
           <div className="divide-y">
             <Step number="1" title="Importar cookies" description="Selecione um ou vários exports JSON. Apenas cookies de instagram.com serão usados.">
               <input ref={inputRef} className="hidden" type="file" accept="application/json,.json" multiple onChange={(event) => importFiles(event.target.files)} />
-              <button className="button-secondary" disabled={!extensionReady || readingFiles} onClick={() => inputRef.current?.click()}>
+              <button className="button-secondary" disabled={!extensionCompatible || readingFiles} onClick={() => inputRef.current?.click()}>
                 {readingFiles ? <LoaderCircle className="animate-spin" size={16} /> : <FileJson size={16} />} Selecionar JSON
               </button>
             </Step>
@@ -245,7 +279,7 @@ export default function CookieConnectPage() {
               <button className="button-secondary" disabled={!active} onClick={activateSession}><Cookie size={16} /> Ativar e abrir Instagram</button>
             </Step>
             <Step number="3" title="Postar o Story" description="Publica o Story predefinido com link usando somente a sessão ativa neste navegador." done={active?.story_status === "published"}>
-              <button className="button-secondary" disabled={!active || !sessionActivated || !storyPreset.data || publishingStory} onClick={publishStory}>
+              <button className="button-secondary" disabled={!extensionCompatible || !active || !sessionActivated || !storyPreset.data || publishingStory} onClick={publishStory}>
                 {publishingStory ? <LoaderCircle className="animate-spin" size={16} /> : <Send size={16} />} {publishingStory ? "Publicando…" : active?.story_status === "published" ? "Publicar novamente" : "Postar Story"}
               </button>
             </Step>

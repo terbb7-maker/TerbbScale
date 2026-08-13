@@ -1,7 +1,12 @@
 import { publishStoryFromDelivery } from "./story-publisher.js";
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.target !== "offscreen" || message?.type !== "OFFSCREEN_PUBLISH_STORY") return false;
+  if (message?.target !== "offscreen") return false;
+  if (message.type === "OFFSCREEN_PING") {
+    sendResponse({ ok: true, data: { ready: true } });
+    return false;
+  }
+  if (message.type !== "OFFSCREEN_PUBLISH_STORY") return false;
   publishStoryFromDelivery(message.payload?.delivery, message.payload?.expectedAccountId)
     .then((data) => sendResponse({ ok: true, data }))
     .catch((error) => sendResponse({

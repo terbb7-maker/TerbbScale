@@ -7,6 +7,10 @@ const INSTAGRAM_ORIGIN = "https://www.instagram.com";
 const INVITES_URL = "https://www.instagram.com/accounts/manage_access/";
 const MAX_BATCHES = 200;
 const MAX_COOKIES_PER_BATCH = 100;
+const OFFSCREEN_READY_ATTEMPTS = 50;
+const OFFSCREEN_READY_DELAY_MS = 100;
+
+let offscreenSetupPromise = null;
 
 chrome.runtime.onInstalled.addListener(async () => {
   await chrome.storage.session.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
@@ -157,8 +161,7 @@ async function publishCurrentStory(payload) {
   item.story = { status: "publishing", publishedLink: null, error: null, publishedAt: null };
   await chrome.storage.session.set({ [STORAGE_KEY]: queue });
   try {
-    await ensureOffscreenDocument();
-    const rendered = await chrome.runtime.sendMessage({
+    const rendered = await sendToOffscreen({
       target: "offscreen",
       type: "OFFSCREEN_PUBLISH_STORY",
       payload: { delivery: payload.delivery, expectedAccountId: item.accountId },
@@ -191,12 +194,58 @@ async function publishCurrentStory(payload) {
 
 async function ensureOffscreenDocument() {
   if (!chrome.offscreen) throw new Error("Atualize o Chrome para editar Stories em vídeo.");
-  if (await chrome.offscreen.hasDocument()) return;
-  await chrome.offscreen.createDocument({
-    url: "offscreen.html",
-    reasons: ["WORKERS"],
-    justification: "Renderizar localmente o adesivo de link em imagens e vídeos do Story.",
-  });
+  if (!offscreenSetupPromise) {
+    offscreenSetupPromise = prepareOffscreenDocument().finally(() => {
+      offscreenSetupPromise = null;
+    });
+  }
+  return offscreenSetupPromise;
+}
+
+async function prepareOffscreenDocument() {
+  if (!(await chrome.offscreen.hasDocument())) {
+    await chrome.offscreen.createDocument({
+      url: "offscreen.html",
+      reasons: ["WORKERS"],
+      justification: "Renderizar localmente o adesivo de link em imagens e vídeos do Story.",
+    });
+  }
+
+  for (let attempt = 0; attempt < OFFSCREEN_READY_ATTEMPTS; attempt += 1) {
+    try {
+      const response = await chrome.runtime.sendMessage({
+        target: "offscreen",
+        type: "OFFSCREEN_PING",
+      });
+      if (response?.ok && response.data?.ready === true) return;
+    } catch (error) {
+      if (!isMissingReceiverError(error)) throw error;
+    }
+    await delay(OFFSCREEN_READY_DELAY_MS);
+  }
+  throw new Error("O renderizador local do Story não iniciou. Recarregue a extensão e tente novamente.");
+}
+
+async function sendToOffscreen(message) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await ensureOffscreenDocument();
+    try {
+      return await chrome.runtime.sendMessage(message);
+    } catch (error) {
+      if (!isMissingReceiverError(error) || attempt === 1) throw error;
+      await delay(OFFSCREEN_READY_DELAY_MS);
+    }
+  }
+  throw new Error("O renderizador local do Story não respondeu.");
+}
+
+function isMissingReceiverError(error) {
+  return String(error instanceof Error ? error.message : error)
+    .includes("Receiving end does not exist");
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
 async function replaceInstagramCookies(cookies) {
