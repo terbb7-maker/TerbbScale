@@ -1,5 +1,6 @@
 import {
   clearInstagramHeaders,
+  requireInstagramContext,
 } from "./instagram-session.js";
 
 const STORAGE_KEY = "terbb_cookie_queue_v1";
@@ -161,10 +162,18 @@ async function publishCurrentStory(payload) {
   item.story = { status: "publishing", publishedLink: null, error: null, publishedAt: null };
   await chrome.storage.session.set({ [STORAGE_KEY]: queue });
   try {
+    const { cookies, headers } = await requireInstagramContext(item.accountId);
     const rendered = await sendToOffscreen({
       target: "offscreen",
       type: "OFFSCREEN_PUBLISH_STORY",
-      payload: { delivery: payload.delivery, expectedAccountId: item.accountId },
+      payload: {
+        delivery: payload.delivery,
+        instagramContext: {
+          accountId: cookies.ds_user_id,
+          csrfToken: cookies.csrftoken,
+          appId: headers["x-ig-app-id"],
+        },
+      },
     });
     if (!rendered?.ok) throw new Error(rendered?.error || "A renderização local do Story falhou.");
     const result = rendered.data;
@@ -204,26 +213,39 @@ async function ensureOffscreenDocument() {
 
 async function prepareOffscreenDocument() {
   if (!(await chrome.offscreen.hasDocument())) {
-    await chrome.offscreen.createDocument({
-      url: "offscreen.html",
-      reasons: ["WORKERS"],
-      justification: "Renderizar localmente o adesivo de link em imagens e vídeos do Story.",
-    });
+    await createOffscreenDocument();
   }
+  if (await waitForOffscreenReady()) return;
 
+  await chrome.offscreen.closeDocument().catch(() => undefined);
+  await createOffscreenDocument();
+  if (await waitForOffscreenReady()) return;
+
+  throw new Error("O renderizador local do Story não iniciou mesmo após reiniciar. Recarregue a extensão e tente novamente.");
+}
+
+async function createOffscreenDocument() {
+  await chrome.offscreen.createDocument({
+    url: "offscreen.html",
+    reasons: ["WORKERS"],
+    justification: "Renderizar localmente o adesivo de link em imagens e vídeos do Story.",
+  });
+}
+
+async function waitForOffscreenReady() {
   for (let attempt = 0; attempt < OFFSCREEN_READY_ATTEMPTS; attempt += 1) {
     try {
       const response = await chrome.runtime.sendMessage({
         target: "offscreen",
         type: "OFFSCREEN_PING",
       });
-      if (response?.ok && response.data?.ready === true) return;
+      if (response?.ok && response.data?.ready === true) return true;
     } catch (error) {
       if (!isMissingReceiverError(error)) throw error;
     }
     await delay(OFFSCREEN_READY_DELAY_MS);
   }
-  throw new Error("O renderizador local do Story não iniciou. Recarregue a extensão e tente novamente.");
+  return false;
 }
 
 async function sendToOffscreen(message) {

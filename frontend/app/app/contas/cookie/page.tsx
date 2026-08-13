@@ -47,7 +47,7 @@ type CookieBatch = {
 };
 
 const EMPTY_STATUS: ConnectorStatus = { items: [], active_index: 0 };
-const REQUIRED_EXTENSION_VERSION = "1.2.1";
+const REQUIRED_EXTENSION_VERSION = "1.2.2";
 
 function isVersionAtLeast(version: string | null, minimum: string) {
   if (!version) return false;

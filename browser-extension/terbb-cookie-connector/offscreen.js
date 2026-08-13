@@ -1,4 +1,4 @@
-import { publishStoryFromDelivery } from "./story-publisher.js";
+let publisherPromise = null;
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.target !== "offscreen") return false;
@@ -7,7 +7,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return false;
   }
   if (message.type !== "OFFSCREEN_PUBLISH_STORY") return false;
-  publishStoryFromDelivery(message.payload?.delivery, message.payload?.expectedAccountId)
+  getPublisher()
+    .then(({ publishStoryFromDelivery }) => publishStoryFromDelivery(
+      message.payload?.delivery,
+      message.payload?.instagramContext,
+    ))
     .then((data) => sendResponse({ ok: true, data }))
     .catch((error) => sendResponse({
       ok: false,
@@ -15,3 +19,13 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }));
   return true;
 });
+
+function getPublisher() {
+  if (!publisherPromise) {
+    publisherPromise = import("./story-publisher.js").catch((error) => {
+      publisherPromise = null;
+      throw error;
+    });
+  }
+  return publisherPromise;
+}

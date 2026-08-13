@@ -12,7 +12,7 @@ Extensão local do Chrome usada pela tela **Contas > Conectar com cookie**.
 
 Se a extensão já estava instalada, clique em **Recarregar** no cartão dela em
 `chrome://extensions` e depois atualize a página do Terbb Scale. A versão mínima
-para publicação de Story é **1.2.1**.
+para publicação de Story é **1.2.2**.
 
 ## Segurança
 

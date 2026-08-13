@@ -1,5 +1,4 @@
 import { compositeVideoOverlay } from "./ffmpeg-runner.js";
-import { requireInstagramContext } from "./instagram-session.js";
 
 const INSTAGRAM_APP_ID = "936619743392459";
 const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
@@ -34,9 +33,9 @@ const STORY_COLORS = new Set([
 ]);
 const loadedFonts = new Map();
 
-export async function publishStoryFromDelivery(delivery, expectedAccountId) {
+export async function publishStoryFromDelivery(delivery, instagramContext) {
   validateDelivery(delivery);
-  const { cookies, headers } = await requireInstagramContext(expectedAccountId);
+  const context = validateInstagramContext(instagramContext);
   const response = await fetch(delivery.media_url, {
     method: "GET",
     credentials: "omit",
@@ -57,16 +56,29 @@ export async function publishStoryFromDelivery(delivery, expectedAccountId) {
   const entityName = `story_${uploadId}`;
 
   if (delivery.media_kind === "image") {
-    await uploadStoryPhoto(entityName, uploadId, prepared, headers);
+    await uploadStoryPhoto(entityName, uploadId, prepared, context.appId);
   } else {
-    await uploadStoryVideo(entityName, uploadId, prepared, headers);
+    await uploadStoryVideo(entityName, uploadId, prepared, context.appId);
   }
-  const configured = await configureStory(uploadId, delivery, cookies, headers);
+  const configured = await configureStory(uploadId, delivery, context);
   const media = parseInstagramJson(configured).media;
   const publishedLink = media?.pk
-    ? `https://www.instagram.com/stories/${media.user?.username || expectedAccountId}/${media.pk}/`
+    ? `https://www.instagram.com/stories/${media.user?.username || context.accountId}/${media.pk}/`
     : null;
   return { publishedLink, mediaId: media?.pk ? String(media.pk) : null };
+}
+
+function validateInstagramContext(context) {
+  if (!context || typeof context !== "object") {
+    throw new Error("O contexto local do Instagram não foi recebido.");
+  }
+  const accountId = String(context.accountId || "");
+  const csrfToken = String(context.csrfToken || "");
+  const appId = String(context.appId || "");
+  if (!/^\d{1,32}$/.test(accountId) || !csrfToken || csrfToken.length > 256 || !/^\d{1,32}$/.test(appId)) {
+    throw new Error("O contexto local do Instagram é inválido. Ative a conta novamente.");
+  }
+  return { accountId, csrfToken, appId };
 }
 
 function validateDelivery(delivery) {
@@ -267,17 +279,17 @@ function even(value) {
   return rounded % 2 === 0 ? rounded : rounded - 1;
 }
 
-async function uploadStoryPhoto(entityName, uploadId, prepared, headers) {
+async function uploadStoryPhoto(entityName, uploadId, prepared, appId) {
   const params = {
     upload_id: uploadId,
     media_type: 1,
     upload_media_width: prepared.width,
     upload_media_height: prepared.height,
   };
-  await uploadStoryEntity(entityName, prepared.blob, params, prepared.mimeType, headers);
+  await uploadStoryEntity(entityName, prepared.blob, params, prepared.mimeType, appId);
 }
 
-async function uploadStoryVideo(entityName, uploadId, prepared, headers) {
+async function uploadStoryVideo(entityName, uploadId, prepared, appId) {
   const params = {
     "client-passthrough": "1",
     is_sidecar: "0",
@@ -286,10 +298,10 @@ async function uploadStoryVideo(entityName, uploadId, prepared, headers) {
     for_album: true,
     is_unified_video: "0",
   };
-  await uploadStoryEntity(entityName, prepared.blob, params, prepared.mimeType, headers, true);
+  await uploadStoryEntity(entityName, prepared.blob, params, prepared.mimeType, appId, true);
 }
 
-async function uploadStoryEntity(entityName, blob, params, mimeType, headers, video = false) {
+async function uploadStoryEntity(entityName, blob, params, mimeType, appId, video = false) {
   const endpoint = video ? "rupload_igvideo" : "rupload_igphoto";
   const response = await fetch(`https://i.instagram.com/${endpoint}/${entityName}`, {
     method: "POST",
@@ -302,14 +314,14 @@ async function uploadStoryEntity(entityName, blob, params, mimeType, headers, vi
       "X-Entity-Length": String(blob.size),
       "X-Entity-Name": entityName,
       "X-Entity-Type": mimeType,
-      "X-IG-App-ID": headers["x-ig-app-id"] || INSTAGRAM_APP_ID,
+      "X-IG-App-ID": appId || INSTAGRAM_APP_ID,
       "X-Instagram-Rupload-Params": JSON.stringify(params),
     },
   });
   if (!response.ok) throw new Error(`O Instagram recusou o upload do Story (${response.status}).`);
 }
 
-async function configureStory(uploadId, delivery, cookies, headers) {
+async function configureStory(uploadId, delivery, context) {
   const sticker = {
     x: delivery.sticker_x,
     y: delivery.sticker_y,
@@ -331,8 +343,8 @@ async function configureStory(uploadId, delivery, cookies, headers) {
   const requestHeaders = {
     Accept: "*/*",
     "Content-Type": "application/x-www-form-urlencoded",
-    "X-Csrftoken": cookies.csrftoken,
-    "X-IG-App-ID": headers["x-ig-app-id"] || INSTAGRAM_APP_ID,
+    "X-Csrftoken": context.csrfToken,
+    "X-IG-App-ID": context.appId || INSTAGRAM_APP_ID,
   };
   let lastError = "";
   for (let attempt = 0; attempt < 5; attempt += 1) {
